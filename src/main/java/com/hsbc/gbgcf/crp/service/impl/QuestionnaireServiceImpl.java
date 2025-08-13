@@ -1,7 +1,7 @@
 package com.hsbc.gbgcf.crp.service.impl;
 
-import com.hsbc.gbgcf.crp.client.DspTokenClient;
 import com.hsbc.gbgcf.crp.client.ODSClient;
+import com.hsbc.gbgcf.crp.constants.PolicyConstants;
 import com.hsbc.gbgcf.crp.entity.Client;
 import com.hsbc.gbgcf.crp.entity.LegalEntity;
 import com.hsbc.gbgcf.crp.entity.PolicyTracking;
@@ -11,11 +11,11 @@ import com.hsbc.gbgcf.crp.repository.LegalEntitiesRepository;
 import com.hsbc.gbgcf.crp.repository.PolicyTrackingRepository;
 import com.hsbc.gbgcf.crp.service.QuestionnaireService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation. Autowired;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype. Service;
+import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,9 +34,6 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
     private ClientRepository clientRepository;
 
     @Autowired
-    private DspTokenClient dspTokenClient;
-
-    @Autowired
     private ODSClient odsClient;
 
     @Value("${multiple.retake.enable}")
@@ -53,10 +50,10 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
                 policyTracking = new PolicyTracking();
                 policyTracking.setStatus(Status.CASE_INITIATED);
                 policyTracking.setLegalEntity(legalEntity.get());
-                policyTracking.setPolicy(legalEntity.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals("TCPOP")).findAny().get());
+                policyTracking.setPolicy(legalEntity.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals(PolicyConstants.POLICY_CODE_TCPOP)).findAny().get());
                 policyTrackingRepository.save(policyTracking);
             } else {
-                policyTracking.setPolicy(legalEntity.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals("TCPOP")).findAny().get());
+                policyTracking.setPolicy(legalEntity.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals(PolicyConstants.POLICY_CODE_TCPOP)).findAny().get());
                 policyTrackingRepository.save(policyTracking);
             }
         } else if (journeyTypeParts.contains("MG")) {
@@ -66,24 +63,24 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
                 policyTracking = new PolicyTracking();
                 policyTracking.setStatus(Status.CASE_INITIATED);
                 policyTracking.setClient(masterGroup.get());
-                policyTracking.setPolicy(masterGroup.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals("TCPOP")).findAny().get());
+                policyTracking.setPolicy(masterGroup.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals(PolicyConstants.POLICY_CODE_TCPOP)).findAny().get());
                 policyTrackingRepository.save(policyTracking);
             } else {
-                policyTracking.setPolicy(masterGroup.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals("TCPOP")).findAny().get());
+                policyTracking.setPolicy(masterGroup.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals(PolicyConstants.POLICY_CODE_TCPOP)).findAny().get());
                 policyTrackingRepository.save(policyTracking);
             }
         }
 
         String form = odsClient.executeFormReadyRequest(journeyType, customerIdentificationId);
 
-        if (form != null && !form.equals("Form Already Submitted")) {
+        if (form != null && !form.equals(PolicyConstants.FORM_ALREADY_SUBMITTED)) {
             policyTracking.setJourneyType(journeyType);
             policyTracking.setFormDataContent(form);
             policyTracking.setStatus(Status.PULL_FORM);
             policyTrackingRepository.save(policyTracking);
             return ResponseEntity.ok(form);
         } else {
-            return new ResponseEntity<>("Form Already Submitted", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(PolicyConstants.FORM_ALREADY_SUBMITTED, HttpStatus.NOT_FOUND);
         }
     }
 
@@ -140,14 +137,14 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
             policyTracking.setStatus(Status.SUBMITTED);
             policyTrackingRepository.save(policyTracking);
             String form = odsClient.executeSubmitRequest(journeyType, customerIdentifier, formData);
-            if (form != null && !form.equals("Failed")) {
+            if (form != null && !form.equals(PolicyConstants.FAILED)) {
                 policyTracking.setFormDataContent(form);
                 if (multipleRetakeEnabled)
                     policyTracking.setRetake("enable");
                 policyTrackingRepository.save(policyTracking);
-                return ResponseEntity.ok("SUCCESS");
+                return ResponseEntity.ok(PolicyConstants.SUCCESS);
             } else {
-                return new ResponseEntity<>("FAILED", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(PolicyConstants.FAILED, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
             log.error("Exception in submitOdsData: {}", e.getMessage(), e);
@@ -181,7 +178,7 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
                 return ResponseEntity.ok(policyTrackings.get(0).getFormDataContent());
             }
         }
-        return new ResponseEntity<>("Form Not available", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(PolicyConstants.FORM_NOT_AVAILABLE, HttpStatus.NOT_FOUND);
     }
 
     @Override
@@ -195,7 +192,7 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
         } catch (Exception e) {
             log.error("Exception in getInitialForm for customerIdentificationId: {}, journeyType: {}. Error: {}",
                     customerIdentificationId, journeyType, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while resetting the form");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(PolicyConstants.ERROR_RESETTING_FORM);
         }
     }
 
@@ -222,10 +219,10 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
                 policyTrackingNew.setRetake("disable");
             policyTrackingRepository.save(policyTrackingNew);
             String form = odsClient.executeRetakeRequest(journeyType, customerIdentificationId);
-            if (form != null && !form.equals("Failed")) {
-                return ResponseEntity.ok("Collect Data Initiated");
+            if (form != null && !form.equals(PolicyConstants.FAILED)) {
+                return ResponseEntity.ok(PolicyConstants.COLLECT_DATA_INITIATED);
             } else {
-                return new ResponseEntity<>("FAILED", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(PolicyConstants.FAILED, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
             log.error("Exception in submitOdsData: {}", e.getMessage(), e);
@@ -243,7 +240,7 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
         } catch (Exception e) {
             log.error("Error occurred in getQuestionnaireError for journeyType: {}, customerIdentificationId: {}. Exception: {}",
                     journeyType, customerIdentificationId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while processing the request");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(PolicyConstants.ERROR_PROCESSING_REQUEST);
         }
     }
 }
