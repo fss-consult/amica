@@ -32,6 +32,19 @@ public class QuestionnaireController {
         }
     }
 
+    @PostMapping("/submitODSData")
+    public ResponseEntity<String> submitODSData (@RequestParam("journeyType") String journeyType, @RequestParam("customer IdentificationId") String customerIdentificationId, @RequestBody String formData) {
+        log.info("Entering /submitODSData with journeyType: {}, customerIdentificationId: {}", journeyType, customerIdentificationId);
+        try {
+            ResponseEntity<String> response = questionnaireService.submit0dsData(journeyType, customerIdentificationId, formData);
+            log.info("Exiting submitODSData with response status: {}", response.getStatusCode());
+            return response;
+        } catch (Exception e) {
+            log.error("Exception in submitODSData: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
     @GetMapping("/viewForm")
     public ResponseEntity<String> viewForm (@RequestParam("journeyType") String journeyType, @RequestParam("customerIdentificationId") String customerIdentificationId){
         try {
