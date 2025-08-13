@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,14 +18,19 @@ import java.util.Optional;
 public class QuestionnaireServiceImpl implements QuestionnaireService {
     @Autowired
     private PolicyTrackingRepository policyTrackingRepository;
+
     @Autowired
     private LegalEntitiesRepository legalEntitiesRepository;
+
     @Autowired
     private ClientRepository clientRepository;
+
     @Autowired
     private DspTokenClient dspTokenClient;
+
     @Autowired
     private ODSClient odsClient;
+
     @Value("${multiple.retake.enable}")
     Boolean multipleRetakeEnabled;
 
@@ -33,16 +39,16 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
         PolicyTracking policyTracking = new PolicyTracking();
         List<String> journeyTypeParts = Arrays.asList(journeyType.split("-"));
         if (journeyTypeParts.contains("LE")) {
-            policyTracking = policyTrackingRepository.findByLegalEntityIdAndMultipleStatuses(customerIdentificationId, Status.CASE_INITIATED, Status. PULL_FORM, Status.IN_PROGRESS);
+            policyTracking = policyTrackingRepository.findByLegalEntityIdAndMultipleStatuses(customerIdentificationId, Status.CASE_INITIATED, Status.PULL_FORM, Status.IN_PROGRESS);
             Optional<LegalEntity> legalEntity = legalEntitiesRepository.findByEntityId(customerIdentificationId);
-                if (policyTracking == null) {
+            if (policyTracking == null) {
                 policyTracking = new PolicyTracking();
-                policyTracking.setStatus (Status.CASE_INITIATED);
-                policyTracking.setLegalEntity (legalEntity.get());
-                policyTracking.setPolicy (legalEntity.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals("TCPOP")).findAny().get());
+                policyTracking.setStatus(Status.CASE_INITIATED);
+                policyTracking.setLegalEntity(legalEntity.get());
+                policyTracking.setPolicy(legalEntity.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals("TCPOP")).findAny().get());
                 policyTrackingRepository.save(policyTracking);
             } else {
-                policyTracking.setPolicy (legalEntity.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals("TCPOP")).findAny().get());
+                policyTracking.setPolicy(legalEntity.get().getPolicies().stream().filter(x -> x.getPolicyCode().equals("TCPOP")).findAny().get());
                 policyTrackingRepository.save(policyTracking);
             }
         } else if (journeyTypeParts.contains("MG")) {
@@ -88,7 +94,7 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
                 }
             } else if (journeyTypeParts.contains("MG")) {
                 log.info("fetching data for MG");
-                policyTracking = policyTrackingRepository.findByClientIdAndStatuses(customerIdentifier, Status. PULL_FORM, Status.IN_PROGRESS);
+                policyTracking = policyTrackingRepository.findByClientIdAndStatuses(customerIdentifier, Status.PULL_FORM, Status.IN_PROGRESS);
                 if (policyTracking != null) {
                     log.info("policy tracking is not null");
                 }
@@ -98,7 +104,7 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
                 if (policyTracking != null) {
                     log.info("form received from ODS");
                     policyTracking.setFormDataContent(form);
-                    policyTracking.setStatus (Status.IN_PROGRESS);
+                    policyTracking.setStatus(Status.IN_PROGRESS);
                     policyTrackingRepository.save(policyTracking);
                 }
                 return ResponseEntity.ok(form);
@@ -122,13 +128,13 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
                 policyTracking = policyTrackingRepository.findByLegalEntityIdAndStatuses(customerIdentifier, Status.PULL_FORM, Status.IN_PROGRESS);
             } else if (journeyTypeParts.contains("MG")) {
                 log.info(" submit for MG");
-                policyTracking = policyTrackingRepository.findByClientIdAndStatuses (customerIdentifier, Status. PULL_FORM, Status.IN_PROGRESS);
+                policyTracking = policyTrackingRepository.findByClientIdAndStatuses(customerIdentifier, Status.PULL_FORM, Status.IN_PROGRESS);
             }
             policyTracking.setStatus(Status.SUBMITTED);
             policyTrackingRepository.save(policyTracking);
             String form = odsClient.executeSubmitRequest(journeyType, customerIdentifier, formData);
             if (form != null && !form.equals("Failed")) {
-                policyTracking.setFormDataContent (form);
+                policyTracking.setFormDataContent(form);
                 if (multipleRetakeEnabled)
                     policyTracking.setRetake("enable");
                 policyTrackingRepository.save(policyTracking);
@@ -159,8 +165,8 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
             log.info("feting form for MG " + journeyType);
             policyTrackings = policyTrackingRepository.findByMgAndJourneyTypeLatest(customerIdentificationId, journeyType);
             if (policyTrackings != null && !policyTrackings.isEmpty()) {
-                    log.info("policy tracking not null");
-                    if (policyTrackings.get(0).getFormDataContent()== null) {
+                log.info("policy tracking not null");
+                if (policyTrackings.get(0).getFormDataContent() == null) {
                     log.info("latest form is null");
                     policyTrackings = policyTrackingRepository.findByMgAndJourneyTypePrevious(customerIdentificationId, journeyType);
                 }
@@ -195,12 +201,12 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
             List<String> journeyTypeParts = Arrays.asList(journeyType.split("-"));
             if (journeyTypeParts.contains("LE")) {
                 log.info(" retake for LE");
-                policyTracking = policyTrackingRepository.findByLegalEntityIdAndStatusesLatest(customerIdentificationId, Status. SUBMITTED, Status. DECISION_RECEIVED).get(0);
+                policyTracking = policyTrackingRepository.findByLegalEntityIdAndStatusesLatest(customerIdentificationId, Status.SUBMITTED, Status.DECISION_RECEIVED).get(0);
             } else if (journeyTypeParts.contains("MG")) {
                 log.info(" retake for MG");
                 policyTracking = policyTrackingRepository.findByClientIdAndStatusesLatest(customerIdentificationId, Status.SUBMITTED, Status.DECISION_RECEIVED).get(0);
             }
-            policyTrackingNew.setJourneyType (journeyType);
+            policyTrackingNew.setJourneyType(journeyType);
             policyTrackingNew.setClient(policyTracking.getClient());
             policyTrackingNew.setLegalEntity(policyTracking.getLegalEntity());
             policyTrackingNew.setPolicy(policyTracking.getPolicy());
