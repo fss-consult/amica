@@ -84,8 +84,7 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
         log.info("Entering saveOdsData with journeyType: {}, customerIdentifier: {}", journeyType, customerIdentifier);
         try {
             PolicyTracking policyTracking = new PolicyTracking();
-            List<String> journeyTypeParts =
-                    Arrays.asList(journeyType.split("-"));
+            List<String> journeyTypeParts = Arrays.asList(journeyType.split("-"));
             if (journeyTypeParts.contains("LE")) {
                 log.info("fetching data for LE");
                 policyTracking = policyTrackingRepository.findByLegalEntityIdAndStatuses(customerIdentifier, Status.PULL_FORM, Status.IN_PROGRESS);
@@ -143,7 +142,7 @@ public class QuestionnaireServiceImpl implements QuestionnaireService {
                 return new ResponseEntity<>("FAILED", HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            log.error("Exception in submit0dsData: {}", e.getMessage(), e);
+            log.error("Exception in submitOdsData: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
