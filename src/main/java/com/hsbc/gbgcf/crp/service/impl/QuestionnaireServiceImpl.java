@@ -1,13 +1,21 @@
 package com.hsbc.gbgcf.crp.service.impl;
 
+import com.hsbc.gbgcf.crp.client.DspTokenClient;
+import com.hsbc.gbgcf.crp.client.ODSClient;
+import com.hsbc.gbgcf.crp.entity.Client;
+import com.hsbc.gbgcf.crp.entity.LegalEntity;
+import com.hsbc.gbgcf.crp.entity.PolicyTracking;
+import com.hsbc.gbgcf.crp.enums.Status;
+import com.hsbc.gbgcf.crp.repository.ClientRepository;
+import com.hsbc.gbgcf.crp.repository.LegalEntitiesRepository;
+import com.hsbc.gbgcf.crp.repository.PolicyTrackingRepository;
 import com.hsbc.gbgcf.crp.service.QuestionnaireService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation. Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-
+import org.springframework.stereotype. Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

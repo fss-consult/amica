@@ -2,12 +2,15 @@ package com.hsbc.gbgcf.crp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * Main Spring Boot application class for the Positions Collector application.
  * This class serves as the entry point for the Spring Boot application.
+ * Enables Feign clients for making HTTP requests to external services.
  */
 @SpringBootApplication
+@EnableFeignClients
 public class PositionsCollectorApplication {
 
     /**
