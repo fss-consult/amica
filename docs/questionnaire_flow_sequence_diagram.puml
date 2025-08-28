@@ -1,0 +1,129 @@
+@startuml Questionnaire Flow Sequence Diagram
+
+title Questionnaire Flow Sequence Diagram
+
+actor "User" as user
+participant "QuestionnaireController" as controller
+participant "QuestionnaireService" as service
+participant "ODSClient" as odsClient
+database "Database\n(Repositories)" as db
+
+== Form Data Retrieval ==
+user -> controller : GET /api/v1/form-data/{journeyType}/{customerIdentificationId}
+activate controller
+controller -> service : getODSdata(journeyType, customerIdentificationId)
+activate service
+service -> db : Find client and legal entity data
+activate db
+db --> service : Return data
+deactivate db
+service -> odsClient : executeFormReadyRequest(journeyType, customerIdentificationId)
+activate odsClient
+odsClient --> service : Return form data
+deactivate odsClient
+service --> controller : Return ResponseEntity with form data
+deactivate service
+controller --> user : Return form data response
+deactivate controller
+
+== Save Form Data ==
+user -> controller : PUT /api/v1/saveODSData
+activate controller
+controller -> service : saveOdsData(journeyType, customerIdentificationId, formData)
+activate service
+service -> db : Update policy tracking status to IN_PROGRESS
+activate db
+db --> service : Confirm update
+deactivate db
+service -> odsClient : executeSaveRequest(journeyType, customerIdentificationId, formData)
+activate odsClient
+odsClient --> service : Return save result
+deactivate odsClient
+service --> controller : Return ResponseEntity with save result
+deactivate service
+controller --> user : Return save response
+deactivate controller
+
+== Submit Form Data ==
+user -> controller : POST /api/v1/submitODSData
+activate controller
+controller -> service : submitOdsData(journeyType, customerIdentificationId, formData)
+activate service
+service -> db : Update policy tracking status to COMPLETED
+activate db
+db --> service : Confirm update
+deactivate db
+service -> odsClient : executeSubmitRequest(journeyType, customerIdentificationId, formData)
+activate odsClient
+odsClient --> service : Return submit result
+deactivate odsClient
+service --> controller : Return ResponseEntity with submit result
+deactivate service
+controller --> user : Return submit response
+deactivate controller
+
+== View Form ==
+user -> controller : GET /api/v1/viewForm
+activate controller
+controller -> service : viewForm(journeyType, customerIdentificationId)
+activate service
+service -> db : Find policy tracking data
+activate db
+db --> service : Return data
+deactivate db
+service -> odsClient : executeFormReadyRequest(journeyType, customerIdentificationId)
+activate odsClient
+odsClient --> service : Return form data
+deactivate odsClient
+service --> controller : Return ResponseEntity with form data
+deactivate service
+controller --> user : Return form data response
+deactivate controller
+
+== Reset Form ==
+user -> controller : GET /api/v1/reset
+activate controller
+controller -> service : getInitialForm(journeyType, customerIdentificationId)
+activate service
+service -> odsClient : executeResetRequest(journeyType, customerIdentificationId)
+activate odsClient
+odsClient --> service : Return reset result
+deactivate odsClient
+service --> controller : Return ResponseEntity with reset result
+deactivate service
+controller --> user : Return reset response
+deactivate controller
+
+== Retake Questionnaire ==
+user -> controller : POST /api/v1/retake
+activate controller
+controller -> service : retakeQuestionnaire(journeyType, customerIdentificationId)
+activate service
+service -> db : Update policy tracking status to RETAKE
+activate db
+db --> service : Confirm update
+deactivate db
+service -> odsClient : executeRetakeRequest(journeyType, customerIdentificationId)
+activate odsClient
+odsClient --> service : Return retake result
+deactivate odsClient
+service --> controller : Return ResponseEntity with retake result
+deactivate service
+controller --> user : Return retake response
+deactivate controller
+
+== Error Handling ==
+user -> controller : GET /api/v1/questionnaire-error/{journeyType}/{customerIdentificationId}
+activate controller
+controller -> service : getQuestionnaireError(journeyType, customerIdentificationId)
+activate service
+service -> odsClient : executeQuestionnaireErrorRequest(journeyType, customerIdentificationId)
+activate odsClient
+odsClient --> service : Return error information
+deactivate odsClient
+service --> controller : Return ResponseEntity with error information
+deactivate service
+controller --> user : Return error information response
+deactivate controller
+
+@enduml
